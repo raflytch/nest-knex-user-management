@@ -88,6 +88,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user by ID' })
+  @ApiQuery({ name: 'lang', required: false, type: String })
   @ApiResponse({
     status: 200,
     description: 'User retrieved',
@@ -95,8 +96,9 @@ export class UserController {
   })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
+    @Query('lang') lang?: string,
   ): Promise<UserResponseDto> {
-    return this.userService.findOne(id);
+    return this.userService.findOne(id, lang);
   }
 
   /**
@@ -109,6 +111,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update user' })
+  @ApiQuery({ name: 'lang', required: false, type: String })
   @ApiResponse({
     status: 200,
     description: 'User updated',
@@ -117,8 +120,9 @@ export class UserController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
+    @Query('lang') lang?: string,
   ): Promise<UserResponseDto> {
-    return this.userService.update(id, updateUserDto);
+    return this.userService.update(id, updateUserDto, lang);
   }
 
   /**
@@ -130,12 +134,14 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete user (admin only)' })
+  @ApiQuery({ name: 'lang', required: false, type: String })
   @ApiResponse({ status: 200, description: 'User deleted' })
   async delete(
     @Param('id', ParseIntPipe) id: number,
     @Request() req: RequestWithUser,
+    @Query('lang') lang?: string,
   ): Promise<void> {
-    return this.userService.delete(id, req.user);
+    return this.userService.delete(id, req.user, lang);
   }
 
   /**
@@ -146,7 +152,8 @@ export class UserController {
   @Post('login')
   @ApiOperation({ summary: 'Login user' })
   @ApiResponse({ status: 200, description: 'Login successful' })
-  async login(@Body() loginDto: LoginDto) {
-    return this.userService.login(loginDto.email, loginDto.password);
+  @ApiQuery({ name: 'lang', required: false, type: String })
+  async login(@Body() loginDto: LoginDto, @Query('lang') lang?: string) {
+    return this.userService.login(loginDto.email, loginDto.password, lang);
   }
 }

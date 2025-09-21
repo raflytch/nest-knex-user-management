@@ -12,7 +12,7 @@ import {
   PaginationResult,
 } from '../../commons/interfaces/pagination.interface';
 import { JwtService } from '@nestjs/jwt';
-import { I18nContext } from 'nestjs-i18n';
+import { I18nService } from 'nestjs-i18n';
 import * as bcrypt from 'bcryptjs';
 
 /**
@@ -23,6 +23,7 @@ export class UserService {
   constructor(
     private knexService: KnexService,
     private jwtService: JwtService,
+    private i18n: I18nService,
   ) {}
 
   /**
@@ -82,13 +83,14 @@ export class UserService {
    * @param id - The user ID.
    * @returns The user without password.
    */
-  async findOne(id: number): Promise<UserResponseDto> {
+  async findOne(id: number, lang?: string): Promise<UserResponseDto> {
     const user = (await this.knexService
       .knex('users')
       .where({ id })
       .first()) as User | undefined;
     if (!user) {
-      throw new NotFoundException(I18nContext.current()!.t('USER.NOT_FOUND'));
+      const message = this.i18n.translate('USER.NOT_FOUND', { lang });
+      throw new NotFoundException(message);
     }
     return this.mapToUserResponse(user);
   }
@@ -118,6 +120,7 @@ export class UserService {
       password: string;
       role: 'user' | 'admin';
     }>,
+    lang?: string,
   ): Promise<UserResponseDto> {
     if (updateData.password) {
       updateData.password = await bcrypt.hash(updateData.password, 10);
@@ -128,7 +131,8 @@ export class UserService {
       .update(updateData)
       .returning('*')) as User[];
     if (!user) {
-      throw new NotFoundException(I18nContext.current()!.t('USER.NOT_FOUND'));
+      const message = this.i18n.translate('USER.NOT_FOUND', { lang });
+      throw new NotFoundException(message);
     }
     return this.mapToUserResponse(user);
   }
@@ -141,15 +145,16 @@ export class UserService {
   async delete(
     id: number,
     currentUser: { role: 'user' | 'admin' },
+    lang?: string,
   ): Promise<void> {
     if (currentUser.role !== 'admin') {
-      throw new ForbiddenException(
-        I18nContext.current()!.t('USER.DELETE_FORBIDDEN'),
-      );
+      const message = this.i18n.translate('USER.DELETE_FORBIDDEN', { lang });
+      throw new ForbiddenException(message);
     }
     const deleted = await this.knexService.knex('users').where({ id }).del();
     if (!deleted) {
-      throw new NotFoundException(I18nContext.current()!.t('USER.NOT_FOUND'));
+      const message = this.i18n.translate('USER.NOT_FOUND', { lang });
+      throw new NotFoundException(message);
     }
   }
 
@@ -175,15 +180,15 @@ export class UserService {
   async login(
     email: string,
     password: string,
+    lang?: string,
   ): Promise<{ access_token: string }> {
     const user = await this.findByEmail(email);
     if (user && (await this.validatePassword(password, user.password))) {
       const payload = { email: user.email, sub: user.id, role: user.role };
       return { access_token: this.jwtService.sign(payload) };
     }
-    throw new UnauthorizedException(
-      I18nContext.current()!.t('USER.INVALID_CREDENTIALS'),
-    );
+    const message = this.i18n.translate('USER.INVALID_CREDENTIALS', { lang });
+    throw new UnauthorizedException(message);
   }
 
   /**
