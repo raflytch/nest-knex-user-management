@@ -12,6 +12,7 @@ import {
   PaginationResult,
 } from '../../commons/interfaces/pagination.interface';
 import { JwtService } from '@nestjs/jwt';
+import { I18nContext } from 'nestjs-i18n';
 import * as bcrypt from 'bcryptjs';
 
 /**
@@ -87,7 +88,7 @@ export class UserService {
       .where({ id })
       .first()) as User | undefined;
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(I18nContext.current()!.t('USER.NOT_FOUND'));
     }
     return this.mapToUserResponse(user);
   }
@@ -127,7 +128,7 @@ export class UserService {
       .update(updateData)
       .returning('*')) as User[];
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(I18nContext.current()!.t('USER.NOT_FOUND'));
     }
     return this.mapToUserResponse(user);
   }
@@ -142,11 +143,13 @@ export class UserService {
     currentUser: { role: 'user' | 'admin' },
   ): Promise<void> {
     if (currentUser.role !== 'admin') {
-      throw new ForbiddenException('Only admins can delete users');
+      throw new ForbiddenException(
+        I18nContext.current()!.t('USER.DELETE_FORBIDDEN'),
+      );
     }
     const deleted = await this.knexService.knex('users').where({ id }).del();
     if (!deleted) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(I18nContext.current()!.t('USER.NOT_FOUND'));
     }
   }
 
@@ -178,7 +181,9 @@ export class UserService {
       const payload = { email: user.email, sub: user.id, role: user.role };
       return { access_token: this.jwtService.sign(payload) };
     }
-    throw new UnauthorizedException('Invalid credentials');
+    throw new UnauthorizedException(
+      I18nContext.current()!.t('USER.INVALID_CREDENTIALS'),
+    );
   }
 
   /**

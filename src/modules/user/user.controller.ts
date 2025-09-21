@@ -25,6 +25,7 @@ import { LoginDto } from './dtos/login.dto';
 import { UserResponseDto } from './dtos/user-response.dto';
 import { PaginationOptions } from '../../commons/interfaces/pagination.interface';
 import { JwtAuthGuard } from '../../commons/guards/jwt.guard';
+import { I18nService } from 'nestjs-i18n';
 
 interface RequestWithUser extends Request {
   user: { id: number; email: string; role: 'user' | 'admin' };
@@ -36,7 +37,10 @@ interface RequestWithUser extends Request {
 @ApiTags('users')
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly i18n: I18nService,
+  ) {}
 
   /**
    * Creates a new user.

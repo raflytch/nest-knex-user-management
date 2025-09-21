@@ -1,0 +1,16 @@
+{
+  "USER": {
+    "NOT_FOUND": "User not found",
+    "DELETED": "User deleted",
+    "CREATED": "User created",
+    "UPDATED": "User updated",
+    "INVALID_CREDENTIALS": "Invalid credentials",
+    "DELETE_FORBIDDEN": "Only admins can delete users"
+  },
+  "VALIDATION": {
+    "IS_STRING": "Must be a string",
+    "IS_EMAIL": "Must be a valid email",
+    "IS_NUMBER": "Must be a number",
+    "IS_IN": "Must be one of: {constraints}"
+  }
+}

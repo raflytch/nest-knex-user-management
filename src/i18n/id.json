@@ -1,0 +1,16 @@
+{
+  "USER": {
+    "NOT_FOUND": "Pengguna tidak ditemukan",
+    "DELETED": "Pengguna dihapus",
+    "CREATED": "Pengguna dibuat",
+    "UPDATED": "Pengguna diperbarui",
+    "INVALID_CREDENTIALS": "Kredensial tidak valid",
+    "DELETE_FORBIDDEN": "Hanya admin yang dapat menghapus pengguna"
+  },
+  "VALIDATION": {
+    "IS_STRING": "Harus berupa string",
+    "IS_EMAIL": "Harus berupa email yang valid",
+    "IS_NUMBER": "Harus berupa angka",
+    "IS_IN": "Harus salah satu dari: {constraints}"
+  }
+}
