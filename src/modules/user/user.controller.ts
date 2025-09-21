@@ -9,9 +9,15 @@ import {
   ParseIntPipe,
   UseGuards,
   Request,
-  UnauthorizedException,
   Query,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
@@ -19,7 +25,6 @@ import { LoginDto } from './dtos/login.dto';
 import { UserResponseDto } from './dtos/user-response.dto';
 import { PaginationOptions } from '../../commons/interfaces/pagination.interface';
 import { JwtAuthGuard } from '../../commons/guards/jwt.guard';
-import { JwtService } from '@nestjs/jwt';
 
 interface RequestWithUser extends Request {
   user: { id: number; email: string; role: 'user' | 'admin' };
@@ -28,12 +33,10 @@ interface RequestWithUser extends Request {
 /**
  * Controller for user management.
  */
+@ApiTags('users')
 @Controller('users')
 export class UserController {
-  constructor(
-    private readonly userService: UserService,
-    private jwtService: JwtService,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
   /**
    * Creates a new user.
@@ -41,6 +44,12 @@ export class UserController {
    * @returns The created user.
    */
   @Post()
+  @ApiOperation({ summary: 'Create a new user' })
+  @ApiResponse({
+    status: 201,
+    description: 'User created',
+    type: UserResponseDto,
+  })
   async create(@Body() createUserDto: CreateUserDto): Promise<UserResponseDto> {
     return this.userService.create(createUserDto);
   }
@@ -53,6 +62,11 @@ export class UserController {
    */
   @Get()
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all users with pagination' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Users retrieved' })
   async findAll(
     @Query('page', ParseIntPipe) page: number = 1,
     @Query('limit', ParseIntPipe) limit: number = 10,
@@ -68,6 +82,13 @@ export class UserController {
    */
   @Get(':id')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get user by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'User retrieved',
+    type: UserResponseDto,
+  })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<UserResponseDto> {
@@ -82,6 +103,13 @@ export class UserController {
    */
   @Put(':id')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update user' })
+  @ApiResponse({
+    status: 200,
+    description: 'User updated',
+    type: UserResponseDto,
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
@@ -96,6 +124,9 @@ export class UserController {
    */
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete user (admin only)' })
+  @ApiResponse({ status: 200, description: 'User deleted' })
   async delete(
     @Param('id', ParseIntPipe) id: number,
     @Request() req: RequestWithUser,
@@ -109,20 +140,9 @@ export class UserController {
    * @returns Access token.
    */
   @Post('login')
+  @ApiOperation({ summary: 'Login user' })
+  @ApiResponse({ status: 200, description: 'Login successful' })
   async login(@Body() loginDto: LoginDto) {
-    const user = await this.userService.findByEmail(loginDto.email);
-    if (
-      user &&
-      (await this.userService.validatePassword(
-        loginDto.password,
-        user.password,
-      ))
-    ) {
-      const payload = { email: user.email, sub: user.id, role: user.role };
-      return {
-        access_token: this.jwtService.sign(payload),
-      };
-    }
-    throw new UnauthorizedException('Invalid credentials');
+    return this.userService.login(loginDto.email, loginDto.password);
   }
 }

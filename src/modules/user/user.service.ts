@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { KnexService } from '../../commons/services/knex/knex.service';
 import { User } from '../../models/user.model';
@@ -10,6 +11,7 @@ import {
   PaginationOptions,
   PaginationResult,
 } from '../../commons/interfaces/pagination.interface';
+import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 
 /**
@@ -17,7 +19,10 @@ import * as bcrypt from 'bcryptjs';
  */
 @Injectable()
 export class UserService {
-  constructor(private knexService: KnexService) {}
+  constructor(
+    private knexService: KnexService,
+    private jwtService: JwtService,
+  ) {}
 
   /**
    * Creates a new user.
@@ -156,6 +161,24 @@ export class UserService {
     hashedPassword: string,
   ): Promise<boolean> {
     return bcrypt.compare(password, hashedPassword);
+  }
+
+  /**
+   * Logs in a user.
+   * @param email - User email.
+   * @param password - User password.
+   * @returns Access token.
+   */
+  async login(
+    email: string,
+    password: string,
+  ): Promise<{ access_token: string }> {
+    const user = await this.findByEmail(email);
+    if (user && (await this.validatePassword(password, user.password))) {
+      const payload = { email: user.email, sub: user.id, role: user.role };
+      return { access_token: this.jwtService.sign(payload) };
+    }
+    throw new UnauthorizedException('Invalid credentials');
   }
 
   /**
